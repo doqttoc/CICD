@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "es6",
+    "jsx": "react",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "removeComments": true,
+    "strictNullChecks": false,
+    "outDir": "./build/",
+    "preserveConstEnums": true,
+    "noLib": false,
+    "baseUrl": ".",
+    "paths": {
+      "config": ["node_modules/config/lib/config"],
+      "@/*": ["src/*"]
+    },
+    "rootDirs": ["src", "test"],
+    "lib": ["es6", "dom"]
+  },
+  "include": ["src/**/*", "test/**/*", "typings/index.d.ts"],
+  "exclude": ["build", "node_modules", "static"]
+}
