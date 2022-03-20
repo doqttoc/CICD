@@ -1,1 +1,1 @@
-export {};
+import "antd/dist/antd.css";
