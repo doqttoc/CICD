@@ -1,10 +1,11 @@
 import React from "react"
+import TestOne from "@/pages/ahooks/3-20/one"
 
  const App=()=>{
   return(
     <div>
-      <h1>app.js</h1>
-  </div>
+        <TestOne></TestOne>
+    </div>
   ) 
 }
 
