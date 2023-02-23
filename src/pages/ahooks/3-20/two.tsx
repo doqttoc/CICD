@@ -35,6 +35,15 @@ export default () => {
         <button type="button">
           ccc dddd
         </button>
+        <button type="button">
+          eee fff
+        </button>
+        <button type="button">
+          gggg hhhh
+        </button>
+        <button type="button">
+          iii jjjj
+        </button>
       </p>
     </div>
   );
