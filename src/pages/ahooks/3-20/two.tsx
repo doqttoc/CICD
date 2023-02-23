@@ -26,6 +26,9 @@ export default () => {
         <button type="button" onClick={() => setState((prev) => ({ count: prev.count + 1 }))}>
           count + 1
         </button>
+        <button>
+          aaaa bbbb
+        </button>
       </p>
     </div>
   );
