@@ -12,7 +12,9 @@ pipeline{
                 docker --version
                 node --version
                 npm --version
-                npm config set registry https://registry.npm.taobao.org
+                npm cache clean --force
+                npm config set registry https://registry.npmmirror.com
+                npm config get registry
                 rm -rf package-lock.json
                 npm install
                 npm run build
@@ -21,11 +23,41 @@ pipeline{
                 '''
             }
         }
-        stage('RUN'){
+
+        stage('Check Container Status and RUN') {
+            steps {
+                script {
+                    def containerName = 'pipeline-007'
+                    sh "docker rm -f ${containerName}"
+                    sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
+                    // def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
+                    // if(containerExists){
+                    //      // Check if the container is already running
+                    //     def containerStatus = sh(returnStdout: true, script: "docker inspect -f '{{.State.Status}}' ${containerName}").trim()
+                        
+                    //     if (containerStatus == 'running') {
+                    //         echo "Container ${containerName} is already running"
+                    //         // Perform necessary actions if container is already running
+                    //         sh "docker stop ${containerName}"
+                    //         sh "docker remove ${containerName}"
+                    //         sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
+                    //     } else {
+                    //         echo "Container ${containerName} is not running, starting it now"
+                    //         // Perform necessary actions if container is not running
+                    //         sh "docker remove ${containerName}"
+                    //         sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
+                    //     }
+                    // }else{
+                    //     sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
+                    // }
+                }
+            }
+        }
+        
+        stage('DOCKER CONTAINER STATUS'){
             steps{
-                echo "start run docker container"
-                sh '''
-                    docker run --name pipeline-222 -d -p 8022:80 pipeline-222
+                echo "show  docker container status "
+                sh ''' 
                     docker container ls
                     docker ps
                 '''
