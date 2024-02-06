@@ -1,6 +1,6 @@
 pipeline{
     agent any
-    tools {nodejs "node_12_4_0"}
+    tools {nodejs "node_latest_version"}
     stages{
         stage('Build'){
             steps{
@@ -8,6 +8,7 @@ pipeline{
                 echo "1111"
                 echo "docker --version"
                 echo "hello jenkins"
+
                 sh '''
                 docker --version
                 node --version
