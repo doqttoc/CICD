@@ -1,57 +1,49 @@
 pipeline{
     agent any
+    // parameters {
+    //     string(name: 'VERSION', defaultValue: '1.0', description: 'Version number')
+    // }
     tools {nodejs "node_latest_version"}
     stages{
+        stage('Checkout') {
+            steps {
+                // 检出代码
+                checkout scm
+            }
+        }
         stage('Build'){
             steps{
                 echo "hello world"
                 echo "1111"
                 echo "docker --version"
                 echo "hello jenkins"
-
-                sh '''
-                docker --version
-                node --version
-                npm --version
-                npm cache clean --force
-                npm config set registry https://registry.npmmirror.com
-                npm config get registry
-                rm -rf package-lock.json
-                npm install
-                npm run build
-                docker build -t pipeline-222 .
-                docker image ls
-                '''
-            }
-        }
-
-        stage('Check Container Status and RUN') {
-            steps {
                 script {
+                    def prNumber = env.CHANGE_ID
+                    def prBranch = env.CHANGE_BRANCH
+                    def prAuthor = env.CHANGE_AUTHOR
                     def containerName = 'pipeline-007'
+                    
+                    echo "Pull Request Number: ${prNumber}"
+                    echo "Pull Request Branch: ${prBranch}"
+                    echo "Pull Request Author: ${prAuthor}"
+                    sh '''
+                        docker --version
+                        node --version
+                        npm --version
+                        npm cache clean --force
+                        npm config set registry https://registry.npmmirror.com
+                        npm config get registry
+                        rm -rf package-lock.json
+                        npm install
+                        npm run build
+                        docker image ls
+                    '''
+                    sh " docker build -t pipeline-pr-${prNumber} ."
+                    sh " docker image ls"
                     sh "docker rm -f ${containerName}"
-                    sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    // def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
-                    // if(containerExists){
-                    //      // Check if the container is already running
-                    //     def containerStatus = sh(returnStdout: true, script: "docker inspect -f '{{.State.Status}}' ${containerName}").trim()
-                        
-                    //     if (containerStatus == 'running') {
-                    //         echo "Container ${containerName} is already running"
-                    //         // Perform necessary actions if container is already running
-                    //         sh "docker stop ${containerName}"
-                    //         sh "docker remove ${containerName}"
-                    //         sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    //     } else {
-                    //         echo "Container ${containerName} is not running, starting it now"
-                    //         // Perform necessary actions if container is not running
-                    //         sh "docker remove ${containerName}"
-                    //         sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    //     }
-                    // }else{
-                    //     sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    // }
+                    sh "docker run --name ${containerName} -d -p 8022:80 pipeline-pr-${prNumber}"
                 }
+                
             }
         }
         
@@ -59,8 +51,8 @@ pipeline{
             steps{
                 echo "show  docker container status "
                 sh ''' 
-                    docker container ls
-                    docker ps
+                    docker images
+                    docker ps -a
                 '''
             }
         }
