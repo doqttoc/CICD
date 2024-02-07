@@ -1,44 +1,50 @@
 pipeline{
     agent any
     tools {nodejs "node_latest_version"}
+    environment {
+        prversion = "${env.GIT_BRANCH}"
+    }
     stages{
         stage('Checkout') {
             steps {
+                echo "prversion is :"
+                echo "${prversion}"
                 // 检出代码
                 echo "Current branch is ${env.GIT_BRANCH}"
                 echo "Current branch is ${env.CHANGE_BRANCH}"
                 echo "Current changeid is ${env.CHANGE_ID}"
             }
         }
-        stage('Build'){
-            steps{
-                echo "hello world"
-                echo "1111"
-                echo "docker --version"
-                echo "hello jenkins"
-            
-            
-                  
-            sh '''
-                docker --version
-                node --version
-                npm --version
-                npm cache clean --force
-                npm config set registry https://registry.npmmirror.com
-                npm config get registry
-                rm -rf package-lock.json
-                npm install
-                npm run build
-                docker image ls
-            '''
-            sh " docker build -t pipeline-pr-${env.GIT_BRANCH} ."
-            sh " docker image ls"
-            sh "docker rm -f pipeline-007"
-            sh "docker run --name pipeline-007 -d -p 8022:80 pipeline-pr-${env.GIT_BRANCH}"
-                
+        stage('Replace Slash') {
+            steps {
+                script {
+                    echo "${prversion}"
+                    echo "docker --version"
+                    echo "hello jenkins"
+                    def originalString = "${prversion}"
+                    def modifiedString = originalString.replace('/', '-')
+                    
+                    echo "Modified string: ${modifiedString}"
+                    sh '''
+                        docker --version
+                        node --version
+                        npm --version
+                        npm cache clean --force
+                        npm config set registry https://registry.npmmirror.com
+                        npm config get registry
+                        rm -rf package-lock.json
+                        npm install
+                        npm run build
+                        docker image ls
+                    '''
+                    sh " docker build -t react_front_learn ."
+                    sh "docker tag react_front_learn react_front_learn:${modifiedString}"
+                    sh " docker image ls"
+                    sh "docker rm -f pipeline-007"
+                    sh "docker run --name pipeline-007 -d -p 8022:80 react_front_learn:${modifiedString}"
+                }
             }
         }
-        
         stage('DOCKER CONTAINER STATUS'){
             steps{
                 echo "show  docker container status "
