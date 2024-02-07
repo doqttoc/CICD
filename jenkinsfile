@@ -37,11 +37,79 @@ pipeline{
                         npm run build
                         docker image ls
                     '''
-                    sh " docker build -t react_front_learn ."
-                    sh "docker tag react_front_learn react_front_learn:${modifiedString}"
-                    sh " docker image ls"
-                    sh "docker rm -f pipeline-007"
-                    sh "docker run --name pipeline-007 -d -p 8022:80 react_front_learn:${modifiedString}"
+                    // 判断字符串包含
+                    if (modifiedString.contains("main")) {
+                        echo "modifiedString 包含 'main'"
+
+                        def imageName = "react_front_learn_prod"
+                        def endTag=1
+
+                        // 执行 Docker CLI 命令获取镜像的所有标签
+                        def tags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim()
+
+                        // 将标签分割为数组
+                        def tagArray = tags.split("\n").findAll{it!="latest"}.collect { it.toInteger() }.sort()
+                        tagArray.each{
+                            tag->
+                            echo "aaatag:${tag}"
+                        }
+                        endTag=(tagArray[tagArray.size()-1]).toInteger()+1
+                        
+                        echo "${endTag}"
+                        def containerName = 'react_front_learn_prod'
+                        def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
+
+                         // prod 分支
+                        sh "docker build -t ${containerName} ."
+                        sh "docker tag ${imageName} ${imageName}:${endTag}"
+                        sh "docker image ls"
+                        sh "docker ps -a"
+                        if(containerExists){
+                            sh "docker rm -f ${containerName}"
+                        }
+                        sh "docker run --name ${containerName} -d -p 8027:80 ${imageName}:${endTag}"
+
+                    } else {
+                        // test分支
+                        echo "modifiedString 不包含 'main'"
+                        def prNum=modifiedString.split('-')[2]
+                        def endTag=''
+
+                        def imageName = "react_front_learn_test"
+
+                        // 执行 Docker CLI 命令获取镜像的所有标签
+                        def tags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim()
+
+                        // 将标签分割为数组
+                        def tagArray = tags.split("\n").sort()
+                          // 打印所有标签
+                        tagArray.each { tag ->
+                            echo "测试pr镜像 ${imageName} 的标签: ${tag}"
+                            def tempArr=tag.split('-')
+                            if(tag!="latest"){
+                                if(tempArr[0].toString()==prNum.toString()){
+                                    endTag= prNum + '-' + (tempArr[1].toInteger() + 1)
+                                }else{
+                                    endTag= prNum + '-' + (1)
+                                }
+                            }
+                            
+                        }
+                        echo "${endTag}"
+
+                        def containerName = 'react_front_learn_test'
+                        def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
+                        sh "docker build -t ${containerName} ."
+                        sh "docker tag ${imageName} ${imageName}:${endTag}"
+                        sh "docker image ls"
+                        sh "docker ps -a"
+                        if(containerExists){
+                            sh "docker rm -f ${containerName}"
+                        }
+                        sh "docker run --name ${containerName} -d -p 8022:80 ${imageName}:${endTag}"
+
+                    }
+                    
                 }
             }
         }
