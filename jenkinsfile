@@ -2,14 +2,24 @@ pipeline{
     agent any
     tools {nodejs "node_latest_version"}
     stages{
+        stage('Checkout') {
+            steps {
+                // 检出代码
+                echo "Current branch is ${env.GIT_BRANCH}"
+                echo "Current branch is ${env.CHANGE_BRANCH}"
+                echo "Current changeid is ${env.CHANGE_ID}"
+            }
+        }
         stage('Build'){
             steps{
                 echo "hello world"
                 echo "1111"
                 echo "docker --version"
                 echo "hello jenkins"
-
-                sh '''
+            
+            
+                  
+            sh '''
                 docker --version
                 node --version
                 npm --version
@@ -19,39 +29,13 @@ pipeline{
                 rm -rf package-lock.json
                 npm install
                 npm run build
-                docker build -t pipeline-222 .
                 docker image ls
-                '''
-            }
-        }
-
-        stage('Check Container Status and RUN') {
-            steps {
-                script {
-                    def containerName = 'pipeline-007'
-                    sh "docker rm -f ${containerName}"
-                    sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    // def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
-                    // if(containerExists){
-                    //      // Check if the container is already running
-                    //     def containerStatus = sh(returnStdout: true, script: "docker inspect -f '{{.State.Status}}' ${containerName}").trim()
-                        
-                    //     if (containerStatus == 'running') {
-                    //         echo "Container ${containerName} is already running"
-                    //         // Perform necessary actions if container is already running
-                    //         sh "docker stop ${containerName}"
-                    //         sh "docker remove ${containerName}"
-                    //         sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    //     } else {
-                    //         echo "Container ${containerName} is not running, starting it now"
-                    //         // Perform necessary actions if container is not running
-                    //         sh "docker remove ${containerName}"
-                    //         sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    //     }
-                    // }else{
-                    //     sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    // }
-                }
+            '''
+            sh " docker build -t pipeline-pr-${env.GIT_BRANCH} ."
+            sh " docker image ls"
+            sh "docker rm -f pipeline-007"
+            sh "docker run --name pipeline-007 -d -p 8022:80 pipeline-pr-${env.GIT_BRANCH}"
+                
             }
         }
         
@@ -59,8 +43,8 @@ pipeline{
             steps{
                 echo "show  docker container status "
                 sh ''' 
-                    docker container ls
-                    docker ps
+                    docker images
+                    docker ps -a
                 '''
             }
         }
