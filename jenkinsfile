@@ -1,66 +1,56 @@
 pipeline{
     agent any
     tools {nodejs "node_latest_version"}
+    environment {
+        prversion = "${env.GIT_BRANCH}"
+    }
     stages{
-        stage('Build'){
-            steps{
-                echo "hello world"
-                echo "1111"
-                echo "docker --version"
-                echo "hello jenkins"
-
-                sh '''
-                docker --version
-                node --version
-                npm --version
-                npm cache clean --force
-                npm config set registry https://registry.npmmirror.com
-                npm config get registry
-                rm -rf package-lock.json
-                npm install
-                npm run build
-                docker build -t pipeline-222 .
-                docker image ls
-                '''
+        stage('Checkout') {
+            steps {
+                echo "prversion is :"
+                echo "${prversion}"
+                // 检出代码
+                echo "Current branch is ${env.GIT_BRANCH}"
+                echo "Current branch is ${env.CHANGE_BRANCH}"
+                echo "Current changeid is ${env.CHANGE_ID}"
             }
         }
-
-        stage('Check Container Status and RUN') {
+        stage('Replace Slash') {
             steps {
                 script {
-                    def containerName = 'pipeline-007'
-                    sh "docker rm -f ${containerName}"
-                    sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    // def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
-                    // if(containerExists){
-                    //      // Check if the container is already running
-                    //     def containerStatus = sh(returnStdout: true, script: "docker inspect -f '{{.State.Status}}' ${containerName}").trim()
-                        
-                    //     if (containerStatus == 'running') {
-                    //         echo "Container ${containerName} is already running"
-                    //         // Perform necessary actions if container is already running
-                    //         sh "docker stop ${containerName}"
-                    //         sh "docker remove ${containerName}"
-                    //         sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    //     } else {
-                    //         echo "Container ${containerName} is not running, starting it now"
-                    //         // Perform necessary actions if container is not running
-                    //         sh "docker remove ${containerName}"
-                    //         sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    //     }
-                    // }else{
-                    //     sh "docker run --name ${containerName} -d -p 8022:80 pipeline-222"
-                    // }
+                    echo "${prversion}"
+                    echo "docker --version"
+                    echo "hello jenkins"
+                    def originalString = "${prversion}"
+                    def modifiedString = originalString.replace('/', '-')
+                    
+                    echo "Modified string: ${modifiedString}"
+                    sh '''
+                        docker --version
+                        node --version
+                        npm --version
+                        npm cache clean --force
+                        npm config set registry https://registry.npmmirror.com
+                        npm config get registry
+                        rm -rf package-lock.json
+                        npm install
+                        npm run build
+                        docker image ls
+                    '''
+                    sh " docker build -t react_front_learn ."
+                    sh "docker tag react_front_learn react_front_learn:${modifiedString}"
+                    sh " docker image ls"
+                    sh "docker rm -f pipeline-007"
+                    sh "docker run --name pipeline-007 -d -p 8022:80 react_front_learn:${modifiedString}"
                 }
             }
         }
-        
         stage('DOCKER CONTAINER STATUS'){
             steps{
                 echo "show  docker container status "
                 sh ''' 
-                    docker container ls
-                    docker ps
+                    docker images
+                    docker ps -a
                 '''
             }
         }

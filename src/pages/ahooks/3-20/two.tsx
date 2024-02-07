@@ -18,6 +18,8 @@ export default () => {
       <h1>hey man come on  just practice everyday!</h1>
       <h2> Amazing ! what a great fuck product the askchatai is !! </h2>
       <h2>Danm it shit you fool sun of beach you mother fucker asshoe  </h2>
+      <h1>007007</h1>
+      <h1>do it do it omg  must practice everyday</h1>
       <pre>{JSON.stringify(state, null, 2)}</pre>
       <p>
         <button type="button" onClick={() => setState({ hello: 'world' })}>
