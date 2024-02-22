@@ -1,0 +1,207 @@
+def imagePrefix = "ecr.vip.ebayc3.com/dssgro/gro-biz-service"
+def githubRepo = "DSSGRO/gro-biz-service"
+def qaDeployment = "gro-qa-biz-svc"
+def prodDeployment = "gro-prod-biz-svc"
+def majorVersion = ""
+def committerEmail = h""
+def prNumber = ""
+def buildRevision = ""
+def baseJarfile = "api/target/gro-bs-api"
+def imageVersion = ""
+
+def getCommitterInfo = {
+  def authors = []
+  for (cs in currentBuild.changeSets) {
+    for (item in cs) {
+      authors.add(item.author)
+    }
+  }
+  committerEmail = authors.unique().collect{ a -> "${a}@ebay.com"}.join(' ')
+  if (!committerEmail?.trim()) {
+    committerEmail = "DL-eBay-DSS-Gro-Dev@ebay.com"
+  }
+}
+
+def getPrNumber = {
+  if (env.BRANCH_NAME.startsWith('PR-')) {
+    prNumber = env.BRANCH_NAME.replace('PR-', '')
+  }
+}
+
+def getMajorVersion = {
+  majorVersion = readMavenPom().getVersion()
+}
+
+def getBuildRevision = {
+    buildRevision = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+}
+
+def getImageVersion = {
+  if (env.BRANCH_NAME == 'master') {
+    imageVersion = "${majorVersion}.${BUILD_NUMBER}"
+  } else {
+    imageVersion = "${majorVersion}.pr${prNumber}"
+  }
+}
+
+def populateGlobalVariables = {
+  getCommitterInfo()
+  getMajorVersion()
+  getPrNumber()
+  getBuildRevision()
+  getImageVersion()
+}
+
+def sendStartedMsg = {
+  emailext (
+    subject: "🚄 Job: [${JOB_NAME}] [${BUILD_NUMBER}] - STARTED",
+    to: "${committerEmail}",
+    body: """
+      <p>👷 <b>BLUEOCEAN STATUS </b></p >
+      <p>The job is <span style="color: green;">started</span> (<a href=" ">Open</a >)</p >
+    """,
+   mimeType: 'text/html'
+  )
+}
+
+def sendFailedMsg = {
+  emailext (
+    subject: "❗Job: [${JOB_NAME}] [${BUILD_NUMBER}] - FAILED",
+    to: "${committerEmail}",
+    body: """
+            <p>👷 <b>BLUEOCEAN STATUS </b></p >
+            <p>The job is <span style="color: red;">failed</span> (<a href="${RUN_DISPLAY_URL}">Open</a >)</p >
+          """,
+    mimeType: 'text/html'
+  )
+}
+
+def sendSucceedMsg = {
+  if (env.BRANCH_NAME == 'master') {
+    def version = "${imagePrefix}:${majorVersion}.${BUILD_NUMBER}"
+
+    emailext (
+      subject: "✅ Job: [${JOB_NAME}] [${BUILD_NUMBER}] - SUCCESSFUL",
+      to: "${committerEmail}",
+      body: """
+              <p>👷 <b>BLUEOCEAN STATUS </b></p >
+              <p>The job is <span style="color: green;">successful</span> (<a href="${RUN_DISPLAY_URL}">Open</a >)</p >
+              <p>Deploying ${version} to production environment</p >
+            """,
+      mimeType: 'text/html'
+    )
+  } else {
+    def command = "tess kubectl set image deploy ${qaDeployment} gro-qa-biz-svc=${imagePrefix}:${imageVersion} -n gro-prod-ns"
+    emailext (
+      subject: "✅ Job: [${JOB_NAME}] [${BUILD_NUMBER}] - SUCCESSFUL",
+      to: "${committerEmail}",
+      body: """
+              <p>👷 <b>BLUEOCEAN STATUS </b></p >
+              <p>The job is <span style="color: green;">successful</span> (<a href="${RUN_DISPLAY_URL}">Open</a >)</p >
+              <p>🔧 <b>DEPLOY COMMAND</b></p >
+              <code style="color: crimson;">${command}</code>
+              """,
+      mimeType: 'text/html'
+    )
+  }
+}
+
+def checkBranch = {
+  if (env.BRANCH_NAME != 'master' && !env.BRANCH_NAME.startsWith('PR-')) {
+    error("Invalid branch: ${env.BRANCH_NAME}")
+  }
+}
+
+pipeline {
+  agent { label 'all-in-builder' }
+  stages {
+    stage('Run Build') {
+      steps {
+        script {
+          populateGlobalVariables()
+          sendStartedMsg()
+          checkBranch()
+        }
+        configFileProvider([configFile(fileId: 'mvn-conf', variable: 'MVN_SETTINGS')]) {
+          sh 'mvn -s $MVN_SETTINGS clean install -T 4'
+        }
+      }
+    }
+    stage('Run Sonar') {
+      steps {
+        script {
+          if (env.BRANCH_NAME == 'master') {
+            sh 'mvn sonar:sonar -Dsonar.projectKey=gro-biz-svc -T 3'
+          } else {
+            sh """
+              mvn sonar:sonar -T 3 \
+              -Dsonar.projectKey=gro-biz-svc \
+              -Dsonar.pullrequest.provider=GitHub \
+              -Dsonar.host.url=https://sonar-01-es.vip.es.ebay.com \
+              -Dsonar.pullrequest.key=${prNumber} \
+              -Dsonar.scm.revision=${buildRevision} \
+              -Dsonar.pullrequest.github.repository=${githubRepo} \
+              -Dsonar.pullrequest.branch=${BRANCH_NAME}
+            """
+          }
+        }
+      }
+    }
+    stage('Ship Image') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'gro-ecr-bot', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+          script {
+            if (env.BRANCH_NAME == 'master') {
+              sh """
+                docker login -u=$USERNAME -p=$PASSWORD ecr.vip.ebayc3.com
+                docker build --build-arg JAR_FILE=${baseJarfile}-${majorVersion}.jar -t ${imagePrefix}:${imageVersion} .
+                docker tag ${imagePrefix}:${imageVersion} ${imagePrefix}:latest
+                docker push ${imagePrefix}:${imageVersion}
+                docker push ${imagePrefix}:latest
+              """
+            } else {
+              sh """
+                docker login -u=$USERNAME -p=$PASSWORD ecr.vip.ebayc3.com
+                docker build --build-arg JAR_FILE=${baseJarfile}-${majorVersion}.jar -t ${imagePrefix}:${imageVersion} .
+                docker push ${imagePrefix}:${imageVersion}
+              """
+            }
+          }
+        }
+      }
+    }
+    stage('Deploy') {
+      steps {
+        withCredentials([string(credentialsId: 'CICD_ROBOT_TOKEN', variable: 'TOKEN')]) {
+          script {
+            if (env.BRANCH_NAME == 'master') {
+              sh """
+                curl -LO https://dl.k8s.io/release/v1.21.2/bin/linux/amd64/kubectl
+                chmod +x kubectl
+
+                sed -i s/{{TOKEN}}/${TOKEN}/g cd/kubeconfig.yaml
+
+                cat cd/pipelinerun-deploy.yaml | \
+                sed s/{{IMAGE_VERSION}}/${imageVersion}/g | \
+                sed s/{{BUILD_REVISION}}/${buildRevision}/g | \
+                ./kubectl --kubeconfig=cd/kubeconfig.yaml --namespace=gro-cd create -f -
+              """
+            }
+          }
+        }
+      }
+    }
+  }
+  post {
+    success {
+      script {
+        sendSucceedMsg()
+      }
+    }
+    failure {
+      script {
+        sendFailedMsg()
+      }
+    }
+  }
+}
