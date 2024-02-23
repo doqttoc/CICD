@@ -3,12 +3,14 @@ pipeline{
     tools {nodejs "node_latest_version"}
     environment {
         prversion = "${env.GIT_BRANCH}"
+        build_number = "${env.BUILD_NUMBER}"
     }
     stages{
         stage('Checkout') {
             steps {
                 echo "prversion is :"
                 echo "${prversion}"
+                echo "current build number is :${build_number}"
                 // 检出代码
                 echo "Current branch is ${env.GIT_BRANCH}"
                 echo "Current branch is ${env.CHANGE_BRANCH}"
@@ -42,46 +44,19 @@ pipeline{
                         echo "modifiedString 包含 'main'"
 
                         def imageName = "react_front_learn_prod"
-                        def endTag=1
-
-                        def imageExists = false
-
-                        // 执行 Docker 命令来检查镜像是否存在
-                        def result = sh(script: "docker images ${imageName}", returnStatus: true)
-                        echo "resultttt:${result} "
-
-                        // if (result == 0) {
-                        //     imageExists = true
-                        //      // 执行 Docker CLI 命令获取镜像的所有标签
-                        //     def tags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim()
-
-                        //     // 将标签分割为数组
-                        //     def tagArray = tags.split("\n").findAll{it!="latest"}.collect { it.toInteger() }.sort()
-                        //     if(tagArray.size()>0){
-                        //         tagArray.each{
-                        //             tag->
-                        //             echo "aaatag:${tag}"
-                        //         }
-                        //         endTag=(tagArray[tagArray.size()-1]).toInteger()+1
-                                
-                        //         echo "${endTag}"
-                        //     }else{
-                        //         endTag=1
-                        //     }
-                        // }
 
                         def containerName = 'react_front_learn_prod'
                         def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
 
                          // prod 分支
                         sh "docker build -t ${containerName} ."
-                        sh "docker tag ${imageName} ${imageName}:${endTag}"
+                        sh "docker tag ${imageName} ${imageName}:${build_number}"
                         sh "docker image ls"
                         sh "docker ps -a"
                         if(containerExists){
                             sh "docker rm -f ${containerName}"
                         }
-                        sh "docker run --name ${containerName} -d -p 8027:80 ${imageName}:${endTag}"
+                        sh "docker run --name ${containerName} -d -p 8027:80 ${imageName}:${build_number}"
 
                     } else {
                         // test分支
