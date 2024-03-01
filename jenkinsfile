@@ -36,11 +36,10 @@ pipeline{
                         npm config get registry
                         rm -rf package-lock.json
                         npm install
-                        npm run build
-                        docker image ls
                     '''
                     // 判断字符串包含
                     if (modifiedString.contains("main")) {
+                        sh "npm run build:prod"
                         echo "modifiedString 包含 'main'"
 
                         def imageName = "react_front_learn_prod"
@@ -49,7 +48,7 @@ pipeline{
                         def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
 
                          // prod 分支
-                        sh "docker build -t ${containerName} ."
+                        sh "docker build -t ${imageName} ."
                         sh "docker tag ${imageName} ${imageName}:${build_number}"
                         sh "docker image ls"
                         sh "docker ps -a"
@@ -59,12 +58,14 @@ pipeline{
                         sh "docker run --name ${containerName} -d -p 8027:80 ${imageName}:${build_number}"
 
                     } else {
-                        // test分支
+                        sh "npm run build:dev"
+                        // pr分支
                         echo "modifiedString 不包含 'main'"
                         def prNum=modifiedString.split('-')[2]
                         def endTag=''
 
-                        def imageName = "react_front_learn_test"
+                        def imageName = "react_front_learn_dev"
+                        sh "docker build -t ${imageName} ."
 
                         // 执行 Docker CLI 命令获取镜像的所有标签
                         def tags = sh(script: "docker images --format '{{.Tag}}' ${imageName}", returnStdout: true).trim()
@@ -84,11 +85,14 @@ pipeline{
                             }
                             
                         }
-                        echo "${endTag}"
+                        if(tagArray.length==1&&tagArray[0]=='latest'){
+                            echo "first..."
+                            endTag=prNum+'-'+'1'
+                        }
+                        echo "end Tag is : ${endTag}"
 
-                        def containerName = 'react_front_learn_test'
+                        def containerName = 'react_front_learn_dev'
                         def containerExists = sh(returnStatus: true, script: "docker inspect -f '{{.Id}}' ${containerName} >/dev/null 2>&1").equals(0)
-                        sh "docker build -t ${containerName} ."
                         sh "docker tag ${imageName} ${imageName}:${endTag}"
                         sh "docker image ls"
                         sh "docker ps -a"

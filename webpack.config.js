@@ -2,6 +2,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin")
 const { CleanWebpackPlugin } = require("clean-webpack-plugin")
 
 const path = require("path")
+const webpack=require("webpack")
 
 module.exports = {
   mode: "development",
@@ -69,17 +70,20 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: "./src/index.html",
     }),
-    new CleanWebpackPlugin({ force: true }),
+    // new CleanWebpackPlugin({ force: true }),
+    new webpack.DefinePlugin({
+      'process.env': JSON.stringify(process.env)
+    })
   ],
   devServer: {
     // contentBase: path.join(__dirname, "dist"),
     compress: true,
     open: true,
-    port: 6699,
+    port: 7700,
     hot: true,
     proxy: {
       "/api": {
-        target: "http://baidu.com",
+        target: "http://124.220.72.195:8096",
         pathRewrite: {
           "^/api": "",
         },
