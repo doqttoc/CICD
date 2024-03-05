@@ -55,7 +55,7 @@ export default () => {
     reader.onloadend = function () {
       const base64String = reader.result;
       setImageBase64(base64String as string);
-      let url=process.env.REACT_APP_ENV==apis.envs.prodEnv?apis.envs.prod_url+"/api/baiduyun/getFontFromImage":apis.envs.dev_url+"/api/baiduyun/getFontFromImage";
+      let url = process.env.REACT_APP_ENV == apis.envs.prodEnv ? apis.envs.prod_url + "/api/baiduyun/getFontFromImage" : process.env.REACT_APP_ENV == apis.envs.localEnv ? apis.envs.local_url + "/api/baiduyun/getFontFromImage" : apis.envs.dev_url + "/api/baiduyun/getFontFromImage";
       console.log("url",url)
       axios.post(url, { "imageBase64": encodeURIComponent(base64String as string) }).then(
         res => {
