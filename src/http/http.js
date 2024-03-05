@@ -1,16 +1,18 @@
 import { message } from 'antd';
 import axios from 'axios';
 
-console.log("process.env.REACT_APP_BASE_URL",process.env.REACT_APP_ENV)
-export const dev_url='http://124.220.72.195:8096'
-export const prod_url='http://124.220.72.195:8097'
+console.log("process.env.REACT_APP_BASE_URL", process.env.REACT_APP_ENV)
+export const local_url = 'http://localhost:8007'
+export const dev_url = 'http://124.220.72.195:8096'
+export const prod_url = 'http://124.220.72.195:8097'
 
-export const devEnv="development"
-export const prodEnv="production"
+export const localEnv = "local"
+export const devEnv = "development"
+export const prodEnv = "production"
 
 const instance = axios.create({
     timeout: 15000,
-    baseURL: process.env.REACT_APP_ENV==prodEnv?prod_url:dev_url
+    baseURL: process.env.REACT_APP_ENV == localEnv ? local_url : process.env.REACT_APP_ENV == prodEnv ? prod_url : dev_url
 })
 instance.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded'
 
@@ -98,9 +100,9 @@ export const post = (url, params, headObj) => {
         )
     })
 }
-export const put = (url, params) => {
+export const put = (url, params,headObj) => {
     return new Promise((resolve, reject) => {
-        instance.put(url, params).then(
+        instance.put(url, params,{headers:headObj}).then(
             res => {
                 resolve(res.data)
             }

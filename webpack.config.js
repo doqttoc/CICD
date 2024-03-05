@@ -2,7 +2,9 @@ const HtmlWebpackPlugin = require("html-webpack-plugin")
 const { CleanWebpackPlugin } = require("clean-webpack-plugin")
 
 const path = require("path")
-const webpack=require("webpack")
+const webpack = require("webpack")
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+
 
 module.exports = {
   mode: "development",
@@ -73,17 +75,22 @@ module.exports = {
     // new CleanWebpackPlugin({ force: true }),
     new webpack.DefinePlugin({
       'process.env': JSON.stringify(process.env)
+    }),
+    new MonacoWebpackPlugin({
+      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
+      languages: ['json','python','java','shell','sql']
     })
+
   ],
   devServer: {
     // contentBase: path.join(__dirname, "dist"),
     compress: true,
-    open: true,
+    open:  true,
     port: 7700,
     hot: true,
     proxy: {
       "/api": {
-        target: "http://124.220.72.195:8096",
+        target:process.env.REACT_APP_ENV == 'local' ?"http://localhost:8007"  : "http://124.220.72.195:8096",
         pathRewrite: {
           "^/api": "",
         },
