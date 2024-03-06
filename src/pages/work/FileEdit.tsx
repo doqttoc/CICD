@@ -9,24 +9,27 @@ export default () => {
     const [directory, setDirectory] = useState([]);
     const [code, setCode] = useState(null)
     const [currentFileValue, setCurrentFileValue] = useState(null)
-    const [currentFileName, setCurrentFileName] = useState<any>(process.env.REACT_APP_ENV == apis.envs.localEnv ? "/Users/shengwuyang/Desktop/sql_everyday/python/305.py" : "/usr/_projects/DAY_101_N_/_doit_mp_python/pandas/test_220.py")
+    const [currentFileName, setCurrentFileName] = useState<any>(null)
 
 
     function editorDidMount(editor, monaco) {
         console.log('editorDidMount', editor);
-        editor.focus();
+        // editor.focus();
     }
     function onChange(newValue, e) {
         console.log('onChange', newValue, e);
         setCurrentFileValue(newValue)
     }
     useEffect(() => {
-        apis.WORK.FileManage.getFileContent({ fileName: currentFileName }).then(
-            res => {
-                console.log("resss", res)
-                setCode(res)
-            }
-        )
+        if (currentFileName) {
+            apis.WORK.FileManage.getFileContent({ fileName: currentFileName }).then(
+                res => {
+                    console.log("resss", res)
+                    setCode(res)
+                }
+            )
+        }
+
 
 
     }, [currentFileName])
@@ -41,7 +44,6 @@ export default () => {
 
     function updateFile() {
         console.log("currentFileValue\n", currentFileValue)
-        // var fileName = "305.py";
         let url = process.env.REACT_APP_ENV == apis.envs.prodEnv ? apis.envs.prod_url + "/api/work/files/content" : process.env.REACT_APP_ENV == apis.envs.localEnv ? apis.envs.local_url + "/api/work/files/content" : apis.envs.dev_url + "/api/work/files/content";
         axios.put(url, { fileName: currentFileName, fileContent: currentFileValue }).then(
             res => {
@@ -67,14 +69,6 @@ export default () => {
         if (theinfo.node.directory == false) {
             setCurrentFileName(selectedKeys[0])
         }
-
-        // apis.WORK.FileManage.getFileContent({ fileName: currentFileName, fileContent: currentFileValue }).then(
-        //     res => {
-        //         console.log("resss", res)
-        //         setCode(res)
-        //     }
-        // )
-
     };
 
 
