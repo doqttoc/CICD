@@ -1,0 +1,22 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.content {
+    width: 100%;
+    margin-top: 50px;
+    height: calc(100vh - 50px);
+    z-index: -1;
+    display: flex;
+    flex-flow: row;
+    .leftNav{
+        background-color: #001529;
+    }
+
+    .rightRoute {
+        flex: 4;
+        background-color: whitesmoke;
+        padding: 20px;
+    }
+}

@@ -35,7 +35,10 @@ pipeline{
                         npm config set registry https://registry.npmmirror.com
                         npm config get registry
                         rm -rf package-lock.json
-                        npm install
+                        npm install -g node-gyp@8.4.0
+                        npm install --unsafe-perm
+
+
                     '''
                     // 判断字符串包含
                     if (modifiedString.contains("main")) {

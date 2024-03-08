@@ -1,7 +1,32 @@
 import React from "react";
 
-import ReactDOM from "react-dom";
 
 import App from "./App";
 
-ReactDOM.render(<div><App></App></div>,document.getElementById('root'));
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { HashRouter } from "react-router-dom";
+
+
+const rootElement = document.getElementById('root');
+const root = createRoot(rootElement);
+
+
+
+root.render(
+    <StrictMode>
+        <HashRouter>
+            <App />
+
+        </HashRouter>
+    </StrictMode>,
+);
+// ReactDOM.render(
+//     <div>
+//         <React.StrictMode>
+//             <HashRouter>
+//                 <App></App>
+//             </HashRouter>
+//         </React.StrictMode>
+
+//     </div>, document.getElementById('root'));
