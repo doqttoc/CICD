@@ -58,7 +58,7 @@ pipeline{
                         if(containerExists){
                             sh "docker rm -f ${containerName}"
                         }
-                        sh "docker run --name ${containerName} -d -p 8027:80 ${imageName}:${build_number}"
+                        sh "docker run --name ${containerName} --restart=always --log-driver=json-file --log-opt max-size=10m --log-opt max-file=3 -d -p 8027:80 ${imageName}:${build_number}"
 
                     } else {
                         sh "npm run build:dev"
@@ -102,7 +102,7 @@ pipeline{
                         if(containerExists){
                             sh "docker rm -f ${containerName}"
                         }
-                        sh "docker run --name ${containerName} -d -p 8022:80 ${imageName}:${endTag}"
+                        sh "docker run --name ${containerName} --restart=always --log-driver=json-file --log-opt max-size=10m --log-opt max-file=3 -d -p 8022:80 ${imageName}:${endTag}"
 
                     }
                     
