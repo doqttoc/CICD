@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { Card, Divider } from "antd";
 
 import { apis } from "@/http/api";
+import MonacoEditor from 'react-monaco-editor';
 
 
 
@@ -44,7 +45,8 @@ export default () => {
       axios.post(url, { "imageBase64": encodeURIComponent(base64String as string) }).then(
         res => {
           if (res.status == 200 && res.data.flag == true) {
-            const positionRes = res.data.data.positionRes.replaceAll('\n', '<br>')
+            // const positionRes = res.data.data.positionRes.replaceAll('\n', '<br>')
+            const positionRes = res.data.data.positionRes
             setImageContent(positionRes)
             setImageLine(res.data.data.lineRes)
           }
@@ -55,6 +57,14 @@ export default () => {
     reader.readAsDataURL(file);
   }
 
+  function editorDidMount(editor, monaco) {
+    console.log('editorDidMount', editor);
+    // editor.focus();
+  }
+  function onChange(newValue, e) {
+    console.log('onChange', newValue, e);
+    // setCurrentFileValue(newValue)
+  }
 
 
   const CardHeader = (
@@ -64,6 +74,10 @@ export default () => {
 
     </div>
   )
+
+  const options: any = {
+    language: ["python", "sql", "shell"]
+  }
 
 
 
@@ -77,7 +91,17 @@ export default () => {
           <h3>origin image:</h3>
           {imageBase64 && <img src={imageBase64} alt="Selected Image" width={700} />}
           <h3>pos res:</h3>
-          <div dangerouslySetInnerHTML={{ __html: imageContent }} />
+          {/* <div dangerouslySetInnerHTML={{ __html: imageContent }} /> */}
+          <MonacoEditor
+            width="800"
+            height="600"
+            language="python"
+            theme="vs-dark"
+            value={imageContent}
+            options={options}
+            onChange={onChange}
+            editorDidMount={editorDidMount}
+          />
           <Divider ></Divider>
           <h3>line res:</h3>
           <p>
