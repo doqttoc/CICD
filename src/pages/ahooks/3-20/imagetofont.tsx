@@ -38,6 +38,9 @@ export default () => {
     const reader = new FileReader();
 
     reader.onloadend = function () {
+      // clear font content
+      setImageContent(null);
+      setImageLine(null);
       const base64String = reader.result;
       setImageBase64(base64String as string);
       let url = process.env.REACT_APP_ENV == apis.envs.prodEnv ? apis.envs.prod_url + "/api/baiduyun/getFontFromImage" : process.env.REACT_APP_ENV == apis.envs.localEnv ? apis.envs.local_url + "/api/baiduyun/getFontFromImage" : apis.envs.dev_url + "/api/baiduyun/getFontFromImage";
