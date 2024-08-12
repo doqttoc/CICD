@@ -13,7 +13,8 @@ body {
     top: 50px;
     display: flex;
     flex-flow: row;
-    .leftNav{
+
+    .leftNav {
         background-color: #001529;
         overflow-y: scroll;
         height: calc(100vh - 50px);
@@ -22,8 +23,15 @@ body {
     .rightRoute {
         flex: 4;
         background-color: whitesmoke;
-        padding: 20px;
         overflow-y: scroll;
         height: calc(100vh - 50px);
+
+        .ant-tabs-content-holder {
+            display: none;
+        }
+
+        .detail {
+            padding: 20px;
+        }
     }
 }

@@ -5,7 +5,7 @@ export default () => {
 
     return (
         <div className="header-style" style={{position:"fixed",left:0,top:0,textAlign:'center'}} >
-            <p >Basecoure.work  gentle calmness patience</p>
+            <p >Basecoure.work  gentle calmness patience (not game practice everyday no no no!)</p>
         </div>
     );
 };

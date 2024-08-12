@@ -1,7 +1,8 @@
 import React from "react";
 
-
+import { Provider } from 'react-redux';
 import App from "./App";
+import store from "./store";
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -14,12 +15,14 @@ const root = createRoot(rootElement);
 
 
 root.render(
-    <StrictMode>
-        <HashRouter>
-            <App />
+    <Provider store={store}>
+        <StrictMode>
+            <HashRouter>
+                <App />
 
-        </HashRouter>
-    </StrictMode>,
+            </HashRouter>
+        </StrictMode>
+    </Provider>
 );
 // ReactDOM.render(
 //     <div>
